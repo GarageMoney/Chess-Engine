@@ -79,7 +79,6 @@ U64 Board::getRawMoves(int square) {
     int id = getPiece(square);
     if(id == 0) return Moves;
     
-    
     U64 allOccupancy;
     U64 relevantOccupancy;
     U64 allComplement;
@@ -160,10 +159,10 @@ U64 Board::getRawMoves(int square) {
 
 U64 Board::getSpecialMoves(int square) {
     U64 Moves = 0ULL;
-    if(square < 0 || square > 63) return Moves;
-    int id = getPiece(square);
-    if(id == 0) return Moves;
+    if(square < 0 || square > 63) 
+        return Moves;
 
+    int id = getPiece(square);
     switch(id) {
         case 1: //castling
             if(!movedKing.first && !isCheck(1)) {
@@ -198,26 +197,26 @@ U64 Board::getSpecialMoves(int square) {
         case 6: //passant
             if(square == 32) {
                 if(blackPawn & bitMask1[33]) {
-                    Move prev = History.at(moveIndex);
+                    Move prev = History.at(moveIndex - 1);
                     if(!(prev.bPawn & bitMask1[33]))
                         Moves |= bitMask1[41];
                 }
             }
             else if(33 <= square && square <= 38) {
                 if(blackPawn & bitMask1[square - 1]) {
-                    Move prev = History.at(moveIndex);
+                    Move prev = History.at(moveIndex - 1);
                     if(!(prev.bPawn & bitMask1[square - 1]))
                         Moves |= bitMask1[(square - 1) + 8];
                 }
                 else if(blackPawn & bitMask1[square + 1]) {
-                    Move prev = History.at(moveIndex);
+                    Move prev = History.at(moveIndex - 1);
                     if(!(prev.bPawn & bitMask1[square + 1]))
                         Moves |= bitMask1[(square + 1) + 8];
                 }
             }
             else if(square == 39) {
                 if(blackPawn & bitMask1[38]) {
-                    Move prev = History.at(moveIndex);
+                    Move prev = History.at(moveIndex - 1);
                     if(!(prev.bPawn & bitMask1[38]))
                         Moves |= bitMask1[46];
                 }
@@ -226,31 +225,32 @@ U64 Board::getSpecialMoves(int square) {
         case -6: //passant
             if(square == 24) {
                 if(whitePawn & bitMask1[25]) {
-                    Move prev = History.at(moveIndex);
+                    Move prev = History.at(moveIndex - 1);
                     if(!(prev.wPawn & bitMask1[25]))
                         Moves |= bitMask1[17];
                 }
             }
             else if(25 <= square && square <= 30) {
                 if(whitePawn & bitMask1[square - 1]) {
-                    Move prev = History.at(moveIndex);
+                    Move prev = History.at(moveIndex - 1);
                     if(!(prev.wPawn & bitMask1[square - 1]))
                         Moves |= bitMask1[(square - 1) - 8];
                 }
                 else if(whitePawn & bitMask1[square + 1]) {
-                    Move prev = History.at(moveIndex);
+                    Move prev = History.at(moveIndex - 1);
                     if(!(prev.wPawn & bitMask1[square + 1]))
                         Moves |= bitMask1[(square + 1) - 8];
                 }
             }
             else if(square == 31) {
                 if(whitePawn & bitMask1[30]) {
-                    Move prev = History.at(moveIndex);
+                    Move prev = History.at(moveIndex - 1);
                     if(!(prev.wPawn & bitMask1[30]))
                         Moves |= bitMask1[22];
                 }
             }
             break;
+        default: break;
     }
 
     return Moves;
@@ -328,12 +328,6 @@ bool Board::makeMove(int square1, int square2) {
     int back = History.size() - 1 - moveIndex;
     for(int i = 0; i < back; i++)
         History.pop_back();
-
-    //notes for recording
-    vector<bool> moved = {
-        movedKing.first, movedKing.second, 
-        movedRookA.first, movedRookA.second, 
-        movedRookH.first, movedRookH.second};
 
     U64 maskStart0 = bitMask0[square1];
     U64 maskEnd1 = bitMask1[square2];
@@ -467,6 +461,12 @@ bool Board::makeMove(int square1, int square2) {
             break;
     }
 
+    // recording history
+    vector<bool> moved = {
+        movedKing.first, movedKing.second, 
+        movedRookA.first, movedRookA.second, 
+        movedRookH.first, movedRookH.second};
+
     History.push_back(Board::Move(
         whitePawn, whiteKnight, whiteBishop, whiteRook, whiteQueen, whiteKing, 
         blackPawn, blackKnight, blackBishop, blackRook, blackQueen, blackKing,
@@ -507,7 +507,7 @@ bool Board::undoMove() { //reverse of makeMove()
     movedRookA.second = prev.moved[3];
     movedRookH.first = prev.moved[4];
     movedRookH.second = prev.moved[5];
-    
+
     materialValue = prev.currScore;
  
     whiteTurn = !whiteTurn;
@@ -545,6 +545,7 @@ bool Board::redoMove() { //similar to makeMove()
     blackQueen = next.bQueen;
     blackKing = next.bKing;
 
+    whiteTurn = !whiteTurn;
     return true;
 }
 

@@ -254,8 +254,10 @@ void Chess::start() {
                         }
                         else {
                             if(clickedPiece != 0 &&
-                            (clickedPiece > 0 && isWhiteTurn) ||
-                            (clickedPiece < 0 && !isWhiteTurn)) {
+                            (clickedPiece > 0 && isWhiteTurn && 
+                            (playerColor == 1 || numPlayers == 2)) ||
+                            (clickedPiece < 0 && !isWhiteTurn && 
+                            (playerColor == 0 || numPlayers == 2))) {
                                 isPieceSelected = true;
                                 selectedPiece = clickedPiece;
                                 selectedRow = row;
