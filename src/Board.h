@@ -87,13 +87,18 @@ private:
     //For undo-redo functionality:
     class Move {
     public:
-        int id, idCapture, start, end;
-        bool promoted; bool castled; bool passant;
-        vector<bool> moved;
-        Move(int Id, int IdCapture, int Start, int End, 
-             bool Promoted, bool Castled, bool Passant, vector<bool> Moved) : 
-        id(Id), idCapture(IdCapture), start(Start), end(End), 
-        promoted(Promoted), castled(Castled), passant(Passant), moved(Moved) {}
+        U64 wPawn, wKnight, wBishop, wRook, wQueen, wKing,
+            bPawn, bKnight, bBishop, bRook, bQueen, bKing;
+        U64 wOccupancy, bOccupancy;
+        int currScore; vector<bool> moved;
+        Move(U64 whPawn, U64 whKnight, U64 whBishop, U64 whRook, U64 whQueen, U64 whKing,
+            U64 blPawn, U64 blKnight, U64 blBishop, U64 blRook, U64 blQueen, U64 blKing,
+            U64 whOccupancy, U64 blOccupancy, int curr, vector<bool> Moved) : 
+            wPawn(whPawn), wKnight(whKnight), wBishop(whBishop), wRook(whRook),
+            wQueen(whQueen), wKing(whKing), bPawn(blPawn), bKnight(blKnight),
+            bBishop(blBishop), bRook(blRook), bQueen(blQueen), bKing(blKing),
+            wOccupancy(whOccupancy), bOccupancy(blOccupancy), 
+            currScore(curr), moved(Moved) {}
     };
     vector<Move> History;
     int moveIndex;

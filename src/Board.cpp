@@ -11,16 +11,6 @@ using namespace std;
 Board::Board() : moveIndex(-1), materialValue(0) {
     whiteTurn = true;
 
-    movedKing.first = false; movedKing.second = false;
-    movedRookA.first = false; movedRookA.second = false;
-    movedRookH.first = false; movedRookH.second = false;
-
-    //initialize bit masks
-    for(int i = 0; i < 64; i++) {
-        bitMask1[i] = 1ULL << i;
-        bitMask0[i] = ~bitMask1[i];
-    }
-
     //initialize occupancy boards
     whiteOccupancy = 
         whitePawn | whiteKnight | whiteBishop | 
@@ -28,6 +18,22 @@ Board::Board() : moveIndex(-1), materialValue(0) {
     blackOccupancy = 
         blackPawn | blackKnight | blackBishop | 
         blackRook | blackQueen | blackKing;
+
+    movedKing.first = false; movedKing.second = false;
+    movedRookA.first = false; movedRookA.second = false;
+    movedRookH.first = false; movedRookH.second = false;
+    vector<bool> moved = {false, false, false, false, false, false};
+
+    History.push_back(Board::Move(
+        whitePawn, whiteKnight, whiteBishop, whiteRook, whiteQueen, whiteKing, 
+        blackPawn, blackKnight, blackBishop, blackRook, blackQueen, blackKing,
+        whiteOccupancy, blackOccupancy, materialValue, moved));
+    moveIndex++;
+    //initialize bit masks
+    for(int i = 0; i < 64; i++) {
+        bitMask1[i] = 1ULL << i;
+        bitMask0[i] = ~bitMask1[i];
+    }
 
     //precompute and store attack boards
     generateAllAttacks();
@@ -193,26 +199,26 @@ U64 Board::getSpecialMoves(int square) {
             if(square == 32) {
                 if(blackPawn & bitMask1[33]) {
                     Move prev = History.at(moveIndex);
-                    if(prev.end == 33)
+                    if(!(prev.bPawn & bitMask1[33]))
                         Moves |= bitMask1[41];
                 }
             }
             else if(33 <= square && square <= 38) {
                 if(blackPawn & bitMask1[square - 1]) {
                     Move prev = History.at(moveIndex);
-                    if(prev.end == (square - 1))
+                    if(!(prev.bPawn & bitMask1[square - 1]))
                         Moves |= bitMask1[(square - 1) + 8];
                 }
                 else if(blackPawn & bitMask1[square + 1]) {
                     Move prev = History.at(moveIndex);
-                    if(prev.end == (square + 1))
+                    if(!(prev.bPawn & bitMask1[square + 1]))
                         Moves |= bitMask1[(square + 1) + 8];
                 }
             }
             else if(square == 39) {
                 if(blackPawn & bitMask1[38]) {
                     Move prev = History.at(moveIndex);
-                    if(prev.end == 38)
+                    if(!(prev.bPawn & bitMask1[38]))
                         Moves |= bitMask1[46];
                 }
             }
@@ -221,26 +227,26 @@ U64 Board::getSpecialMoves(int square) {
             if(square == 24) {
                 if(whitePawn & bitMask1[25]) {
                     Move prev = History.at(moveIndex);
-                    if(prev.end == 25)
+                    if(!(prev.wPawn & bitMask1[25]))
                         Moves |= bitMask1[17];
                 }
             }
             else if(25 <= square && square <= 30) {
                 if(whitePawn & bitMask1[square - 1]) {
                     Move prev = History.at(moveIndex);
-                    if(prev.end == (square - 1))
+                    if(!(prev.wPawn & bitMask1[square - 1]))
                         Moves |= bitMask1[(square - 1) - 8];
                 }
                 else if(whitePawn & bitMask1[square + 1]) {
                     Move prev = History.at(moveIndex);
-                    if(prev.end == (square + 1))
+                    if(!(prev.wPawn & bitMask1[square + 1]))
                         Moves |= bitMask1[(square + 1) - 8];
                 }
             }
             else if(square == 31) {
                 if(whitePawn & bitMask1[30]) {
                     Move prev = History.at(moveIndex);
-                    if(prev.end == 30)
+                    if(!(prev.wPawn & bitMask1[30]))
                         Moves |= bitMask1[22];
                 }
             }
@@ -324,9 +330,6 @@ bool Board::makeMove(int square1, int square2) {
         History.pop_back();
 
     //notes for recording
-    bool promoted = false;
-    bool castled = false;
-    bool passant = false;
     vector<bool> moved = {
         movedKing.first, movedKing.second, 
         movedRookA.first, movedRookA.second, 
@@ -379,14 +382,12 @@ bool Board::makeMove(int square1, int square2) {
                     occupancy |= bitMask1[2];
                     whiteRook &= bitMask0[0];
                     whiteRook |= bitMask1[2];
-                    castled = true;
                 }
                 else if(square2 == 5) {
                     occupancy &= bitMask0[7];
                     occupancy |= bitMask1[4];
                     whiteRook &= bitMask0[7];
                     whiteRook |= bitMask1[4];
-                    castled = true;
                 }
             }
             break;
@@ -406,7 +407,7 @@ bool Board::makeMove(int square1, int square2) {
             whitePawn &= maskStart0;        
             //handle promotion
             if(56 <= square2 && square2 <= 63) {
-                promoted = true; whiteQueen |= maskEnd1;
+                whiteQueen |= maskEnd1;
                 materialValue += 800;
             } 
             else whitePawn |= maskEnd1;
@@ -414,7 +415,7 @@ bool Board::makeMove(int square1, int square2) {
             if(idEnd == 0 && (square2 - square1) % 8 != 0) {
                 blackOccupancy &= bitMask0[square2 - 8];
                 blackPawn &= bitMask0[square2 - 8];
-                passant = true; materialValue += 100;
+                materialValue += 100;
             }
             break;
         case -1: 
@@ -428,14 +429,12 @@ bool Board::makeMove(int square1, int square2) {
                     occupancy |= bitMask1[58];
                     blackRook &= bitMask0[56]; 
                     blackRook |= bitMask1[58];
-                    castled = true;
                 }
                 else if(square2 == 61) {
                     occupancy &= bitMask0[63];
                     occupancy |= bitMask1[60];
                     blackRook &= bitMask0[63];
                     blackRook |= bitMask1[60];
-                    castled = true;
                 }
             }
             break;
@@ -455,7 +454,7 @@ bool Board::makeMove(int square1, int square2) {
             blackPawn &= maskStart0;
             //handle promotion  
             if(0 <= square2 && square2 <= 7) { 
-                promoted = true; blackQueen |= maskEnd1;
+                blackQueen |= maskEnd1;
                 materialValue -= 800;
             } 
             else blackPawn |= maskEnd1; 
@@ -463,15 +462,15 @@ bool Board::makeMove(int square1, int square2) {
             if(idEnd == 0 && (square1 - square2) % 8 != 0) {
                 whiteOccupancy &= bitMask0[square2 + 8];
                 whitePawn &= bitMask0[square2 + 8];
-                passant = true; materialValue -= 100;
+                materialValue -= 100;
             }
             break;
     }
 
-    //record notes
     History.push_back(Board::Move(
-        idStart, idEnd, square1, square2, 
-        promoted, castled, passant, moved));
+        whitePawn, whiteKnight, whiteBishop, whiteRook, whiteQueen, whiteKing, 
+        blackPawn, blackKnight, blackBishop, blackRook, blackQueen, blackKing,
+        whiteOccupancy, blackOccupancy, materialValue, moved));
     moveIndex++;
 
     whiteTurn = !whiteTurn;
@@ -482,124 +481,26 @@ int Board::getTotalMoves() {return History.size();}
 int Board::getMoveIndex() {return moveIndex;}
 
 bool Board::undoMove() { //reverse of makeMove() 
-    if(History.empty()) return false;
-    if(moveIndex < 0) return false;
+    if(History.size() < 2) return false;
+    if(moveIndex < 1) return false;
+    moveIndex--;
     Move prev = History.at(moveIndex);
 
-    U64 maskStart1 = bitMask1[prev.start];
-    U64 maskEnd0 = bitMask0[prev.end];
-
-    U64& occupancy = (prev.id > 0) ? 
-        whiteOccupancy : blackOccupancy;
-    occupancy |= maskStart1;
-    occupancy &= maskEnd0;
-
-    switch(prev.id) {
-        case 1: 
-            whiteKing |= maskStart1; 
-            whiteKing &= maskEnd0; 
-            if(prev.castled) {
-                if(prev.end == 1) {
-                    occupancy |= bitMask1[0];
-                    occupancy &= bitMask0[2];
-                    whiteRook |= bitMask1[0];
-                    whiteRook &= bitMask0[2];
-                }
-                else if(prev.end == 5) {
-                    occupancy |= bitMask1[7];
-                    occupancy &= bitMask0[4];
-                    whiteRook |= bitMask1[7];
-                    whiteRook &= bitMask0[4];
-                }
-            }
-            break;
-        case 2: whiteQueen |= maskStart1; 
-                whiteQueen &= maskEnd0; break;
-        case 3: whiteRook |= maskStart1; 
-                whiteRook &= maskEnd0; break;
-        case 4: whiteBishop |= maskStart1; 
-                whiteBishop &= maskEnd0; break;
-        case 5: whiteKnight |= maskStart1; 
-                whiteKnight &= maskEnd0; break;
-        case 6: 
-            if(prev.promoted) {
-                whiteQueen &= maskEnd0;
-                materialValue -= 800;
-            }
-            else whitePawn &= maskEnd0;
-            whitePawn |= maskStart1;
-            if(prev.passant) {
-                blackOccupancy |= bitMask1[prev.end - 8];
-                blackPawn |= bitMask1[prev.end - 8];
-                materialValue -= 100;
-            }
-            break;
-        case -1: 
-            blackKing |= maskStart1; 
-            blackKing &= maskEnd0; 
-            if(prev.castled) {
-                if(prev.end == 57) {
-                    occupancy |= bitMask1[56];
-                    occupancy &= bitMask0[58];
-                    blackRook |= bitMask1[56];
-                    blackRook &= bitMask0[58];
-                }
-                else if(prev.end == 61) {
-                    occupancy |= bitMask1[63];
-                    occupancy &= bitMask0[60];
-                    blackRook |= bitMask1[63];
-                    blackRook &= bitMask0[60];
-                }
-            }
-            break;
-        case -2: blackQueen |= maskStart1; 
-                 blackQueen &= maskEnd0; break;
-        case -3: blackRook |= maskStart1; 
-                 blackRook &= maskEnd0; break;
-        case -4: blackBishop |= maskStart1; 
-                 blackBishop &= maskEnd0; break;
-        case -5: blackKnight |= maskStart1; 
-                 blackKnight &= maskEnd0; break;
-        case -6: 
-            if(prev.promoted) {
-                blackQueen &= maskEnd0;
-                materialValue += 800;
-            }
-            else blackPawn &= maskEnd0;
-            if(prev.passant) {
-                whiteOccupancy |= bitMask1[prev.end + 8];
-                whitePawn |= bitMask1[prev.end + 8];
-                materialValue += 100;
-            }
-            blackPawn |= maskStart1;
-            break;
-    }
-
-    if(prev.idCapture != 0) {
-        U64 maskEnd1 = bitMask1[prev.end];
-        U64& occupancy = (prev.idCapture > 0) ? 
-            whiteOccupancy : blackOccupancy;
-        occupancy |= maskEnd1;
-
-        switch(prev.idCapture) {
-            case 1: whiteKing |= maskEnd1; break;
-            case 2: whiteQueen |= maskEnd1; break;
-            case 3: whiteRook |= maskEnd1; break;
-            case 4: whiteBishop |= maskEnd1; break;
-            case 5: whiteKnight |= maskEnd1; break;
-            case 6: whitePawn |= maskEnd1; break;
-            case -1: blackKing |= maskEnd1; break;
-            case -2: blackQueen |= maskEnd1; break;
-            case -3: blackRook |= maskEnd1; break;
-            case -4: blackBishop |= maskEnd1; break;
-            case -5: blackKnight |= maskEnd1; break;
-            case -6: blackPawn |= maskEnd1; break;
-        }
-
-        if(prev.idCapture > 0) materialValue += pieceValue[prev.idCapture];
-        else materialValue -= pieceValue[abs(prev.idCapture)];
-    }
-
+    whiteOccupancy = prev.wOccupancy;
+    whitePawn = prev.wPawn;
+    whiteKnight = prev.wKnight;
+    whiteBishop = prev.wBishop;
+    whiteRook = prev.wRook;
+    whiteQueen = prev.wQueen;
+    whiteKing = prev.wKing;
+    blackOccupancy = prev.bOccupancy;
+    blackPawn = prev.bPawn;
+    blackKnight = prev.bKnight;
+    blackBishop = prev.bBishop;
+    blackRook = prev.bRook;
+    blackQueen = prev.bQueen;
+    blackKing = prev.bKing;
+    
     movedKing.first = prev.moved[0]; 
     movedKing.second = prev.moved[1];
     movedRookA.first = prev.moved[2];
@@ -607,17 +508,20 @@ bool Board::undoMove() { //reverse of makeMove()
     movedRookH.first = prev.moved[4];
     movedRookH.second = prev.moved[5];
     
-    moveIndex--;
+    materialValue = prev.currScore;
+ 
     whiteTurn = !whiteTurn;
     return true;
 }
 
 bool Board::redoMove() { //similar to makeMove()
-    if(History.empty()) return false;
+    if(History.size() <= 1) return false;
     if(moveIndex == History.size() - 1) 
         return false;
     moveIndex++;
     Move next = History.at(moveIndex);
+
+    materialValue = next.currScore;
 
     movedKing.first = next.moved[0]; 
     movedKing.second = next.moved[1];
@@ -626,119 +530,21 @@ bool Board::redoMove() { //similar to makeMove()
     movedRookH.first = next.moved[4];
     movedRookH.second = next.moved[5];
 
-    U64 maskStart0 = bitMask0[next.start];
-    U64 maskEnd1 = bitMask1[next.end];
+    whiteOccupancy = next.wOccupancy;
+    whitePawn = next.wPawn;
+    whiteKnight = next.wKnight;
+    whiteBishop = next.wBishop;
+    whiteRook = next.wRook;
+    whiteQueen = next.wQueen;
+    whiteKing = next.wKing;
+    blackOccupancy = next.bOccupancy;
+    blackPawn = next.bPawn;
+    blackKnight = next.bKnight;
+    blackBishop = next.bBishop;
+    blackRook = next.bRook;
+    blackQueen = next.bQueen;
+    blackKing = next.bKing;
 
-    if(next.idCapture != 0) {
-        U64 maskEnd0 = bitMask0[next.end];
-        U64& occupancy = (next.idCapture > 0) ? 
-            whiteOccupancy : blackOccupancy;
-        occupancy &= maskEnd0;
-
-        switch(next.idCapture) {
-            case 1: whiteKing &= maskEnd0; break;
-            case 2: whiteQueen &= maskEnd0; break;
-            case 3: whiteRook &= maskEnd0; break;
-            case 4: whiteBishop &= maskEnd0; break;
-            case 5: whiteKnight &= maskEnd0; break;
-            case 6: whitePawn &= maskEnd0; break;
-            case -1: blackKing &= maskEnd0; break;
-            case -2: blackQueen &= maskEnd0; break;
-            case -3: blackRook &= maskEnd0; break;
-            case -4: blackBishop &= maskEnd0; break;
-            case -5: blackKnight &= maskEnd0; break;
-            case -6: blackPawn &= maskEnd0; break;
-        }
-
-        if(next.idCapture > 0) materialValue -= pieceValue[next.idCapture];
-        else materialValue += pieceValue[abs(next.idCapture)];
-    }
-
-    U64& occupancy = (next.id > 0) ? 
-        whiteOccupancy : blackOccupancy;
-    occupancy &= maskStart0;
-    occupancy |= maskEnd1;
-
-    switch(next.id) {
-        case 1: 
-            whiteKing &= maskStart0; 
-            whiteKing |= maskEnd1; 
-            if(next.castled) {
-                if(next.end == 1) {
-                    occupancy &= bitMask0[0];
-                    occupancy |= bitMask1[2];
-                    whiteRook &= bitMask0[0];
-                    whiteRook |= bitMask1[2];
-                }
-                else if(next.end == 5) {
-                    occupancy &= bitMask0[7];
-                    occupancy |= bitMask1[4];
-                    whiteRook &= bitMask0[7];
-                    whiteRook |= bitMask1[4];
-                }
-            }
-            break;
-        case 2: whiteQueen &= maskStart0; 
-                whiteQueen |= maskEnd1; break;
-        case 3: whiteRook &= maskStart0; 
-                whiteRook |= maskEnd1; break;
-        case 4: whiteBishop &= maskStart0; 
-                whiteBishop |= maskEnd1; break;
-        case 5: whiteKnight &= maskStart0; 
-                whiteKnight |= maskEnd1; break;
-        case 6: 
-            if(next.promoted) {
-                whiteQueen |= maskEnd1;
-                materialValue += 800;
-            }
-            else whitePawn |= maskEnd1;
-            whitePawn &= maskStart0;
-            if(next.passant) {
-                blackOccupancy &= bitMask0[next.end - 8];
-                blackPawn &= bitMask0[next.end - 8];
-                materialValue += 100;
-            }
-            break;
-        case -1: 
-            blackKing &= maskStart0; 
-            blackKing |= maskEnd1; 
-            if(next.castled) {
-                if(next.end == 57) {
-                    occupancy &= bitMask0[56];
-                    occupancy |= bitMask1[58];
-                    blackRook &= bitMask0[56];
-                    blackRook |= bitMask1[58];
-                }
-                else if(next.end == 61) {
-                    occupancy &= bitMask0[63];
-                    occupancy |= bitMask1[60];
-                    blackRook &= bitMask0[63];
-                    blackRook |= bitMask1[60];
-                }
-            }
-            break;
-        case -2: blackQueen &= maskStart0; 
-                 blackQueen |= maskEnd1; break;
-        case -3: blackRook &= maskStart0; 
-                 blackRook |= maskEnd1; break;
-        case -4: blackBishop &= maskStart0; 
-                 blackBishop |= maskEnd1; break;
-        case -5: blackKnight &= maskStart0; 
-                 blackKnight |= maskEnd1; break;
-        case -6: 
-            if(next.promoted) {
-                blackQueen |= maskEnd1;
-                materialValue -= 800;
-            }
-            else blackPawn |= maskEnd1;
-            if(next.passant) {
-                whiteOccupancy &= bitMask0[next.end + 8];
-                whitePawn &= bitMask0[next.end + 8];
-                materialValue -= 100;
-            }
-            blackPawn &= maskStart0;
-            break;
-    }
     return true;
 }
 
