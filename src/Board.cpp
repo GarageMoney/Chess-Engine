@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <random>
 #include <unordered_map>
+#include <omp.h>
 #include "Board.h"
 #include "Table.h"
 typedef uint64_t U64;
@@ -686,18 +687,20 @@ int Board::evaluatePosition() {
     for(int row = 0; row < 8; row++) {
         for(int col = 0; col < 8; col++) {
             int square = row * 8 + col;
-                 if(bitMask1[square] & whitePawn) score += pawnTable[7 - row][col];
-            else if(bitMask1[square] & whiteKnight) score += knightTable[7 - row][col];
-            else if(bitMask1[square] & whiteBishop) score += bishopTable[7 - row][col];
-            else if(bitMask1[square] & whiteRook) score += rookTable[7 - row][col];
-            else if(bitMask1[square] & whiteQueen) score += queenTable[7 - row][col];
-            else if(bitMask1[square] & whiteKing) score += kingTable[7 - row][col];
-            else if(bitMask1[square] & blackPawn) score -= pawnTable[row][col];
-            else if(bitMask1[square] & blackKnight) score -= knightTable[row][col];
-            else if(bitMask1[square] & blackBishop) score -= bishopTable[row][col];
-            else if(bitMask1[square] & blackRook) score -= rookTable[row][col];
-            else if(bitMask1[square] & blackQueen) score -= queenTable[row][col];
-            else if(bitMask1[square] & blackKing) score -= kingTable[row][col];
+            U64 squareMask = bitMask1[square];
+            if(squareMask & ~(whiteOccupancy | blackOccupancy)) continue;
+            if(squareMask & whitePawn) score += pawnTable[7 - row][col];
+            else if(squareMask & whiteKnight) score += knightTable[7 - row][col];
+            else if(squareMask & whiteBishop) score += bishopTable[7 - row][col];
+            else if(squareMask & whiteRook) score += rookTable[7 - row][col];
+            else if(squareMask & whiteQueen) score += queenTable[7 - row][col];
+            else if(squareMask & whiteKing) score += kingTable[7 - row][col];
+            else if(squareMask & blackPawn) score -= pawnTable[row][col];
+            else if(squareMask & blackKnight) score -= knightTable[row][col];
+            else if(squareMask & blackBishop) score -= bishopTable[row][col];
+            else if(squareMask & blackRook) score -= rookTable[row][col];
+            else if(squareMask & blackQueen) score -= queenTable[row][col];
+            else if(squareMask & blackKing) score -= kingTable[row][col];
         }
     }
     return score;
@@ -709,6 +712,7 @@ void Board::generateAllAttacks() {
     int whitePawn[3][2] = {
         {1, -1}, {1, 1}
     };
+    #pragma omp parallel for collapse(2)
     for(int i = 0; i < 8; i++) {
         for(int j = 0; j < 8; j++) {
             U64 curr = 0;
@@ -729,6 +733,7 @@ void Board::generateAllAttacks() {
     int blackPawn[3][2] = {
         {-1, -1}, {-1, 1}
     };
+    #pragma omp parallel for collapse(2)
     for(int i = 0; i < 8; i++) {
         for(int j = 0; j < 8; j++) {
             U64 curr = 0;
@@ -750,6 +755,7 @@ void Board::generateAllAttacks() {
         {-2, -1}, {-2, 1}, {-1, -2}, {-1, 2},
         {1, -2}, {1, 2}, {2, -1}, {2, 1}
     };
+    #pragma omp parallel for collapse(2)
     for(int i = 0; i < 8; i++) {
         for(int j = 0; j < 8; j++) {
             U64 curr = 0;
@@ -771,6 +777,7 @@ void Board::generateAllAttacks() {
         {1, 1}, {-1, -1}, 
         {1, -1}, {-1, 1}
     };
+    #pragma omp parallel for collapse(2)
     for(int i = 0; i < 8; i++) {
         for(int j = 0; j < 8; j++) {
             U64 curr = 0;
@@ -823,6 +830,7 @@ void Board::generateAllAttacks() {
         {1, 0}, {-1, 0}, 
         {0, -1}, {0, 1}
     };
+    #pragma omp parallel for collapse(2)
     for(int i = 0; i < 8; i++) {
         for(int j = 0; j < 8; j++) {
             U64 curr = 0;
@@ -874,6 +882,7 @@ void Board::generateAllAttacks() {
         {1, 1}, {-1, -1}, {1, -1}, {-1, 1},
         {1, 0}, {-1, 0}, {0, -1}, {0, 1}
     };
+    #pragma omp parallel for collapse(2)
     for(int i = 0; i < 8; i++) {
         for(int j = 0; j < 8; j++) {
             U64 curr = 0;

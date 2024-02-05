@@ -130,44 +130,32 @@ void Chess::start() {
 
     //load images
     SDL_Surface* image;
-    image = IMG_Load("C:/Visual Studio Code/Chess/images/whiteKing.png");
-    textureWhite.push_back(SDL_CreateTextureFromSurface(renderer, image));
-    image = IMG_Load("C:/Visual Studio Code/Chess/images/whiteQueen.png");
-    textureWhite.push_back(SDL_CreateTextureFromSurface(renderer, image));
-    image = IMG_Load("C:/Visual Studio Code/Chess/images/whiteRook.png");
-    textureWhite.push_back(SDL_CreateTextureFromSurface(renderer, image));
-    image = IMG_Load("C:/Visual Studio Code/Chess/images/whiteBishop.png");
-    textureWhite.push_back(SDL_CreateTextureFromSurface(renderer, image));
-    image = IMG_Load("C:/Visual Studio Code/Chess/images/whiteKnight.png");
-    textureWhite.push_back(SDL_CreateTextureFromSurface(renderer, image));
-    image = IMG_Load("C:/Visual Studio Code/Chess/images/whitePawn.png");
-    textureWhite.push_back(SDL_CreateTextureFromSurface(renderer, image));
-    image = IMG_Load("C:/Visual Studio Code/Chess/images/blackKing.png");
-    textureBlack.push_back(SDL_CreateTextureFromSurface(renderer, image));
-    image = IMG_Load("C:/Visual Studio Code/Chess/images/blackQueen.png");
-    textureBlack.push_back(SDL_CreateTextureFromSurface(renderer, image));
-    image = IMG_Load("C:/Visual Studio Code/Chess/images/blackRook.png");
-    textureBlack.push_back(SDL_CreateTextureFromSurface(renderer, image));
-    image = IMG_Load("C:/Visual Studio Code/Chess/images/blackBishop.png");
-    textureBlack.push_back(SDL_CreateTextureFromSurface(renderer, image));
-    image = IMG_Load("C:/Visual Studio Code/Chess/images/blackKnight.png");
-    textureBlack.push_back(SDL_CreateTextureFromSurface(renderer, image));
-    image = IMG_Load("C:/Visual Studio Code/Chess/images/blackPawn.png");
-    textureBlack.push_back(SDL_CreateTextureFromSurface(renderer, image));
-    image = IMG_Load("C:/Visual Studio Code/Chess/images/PureBlack.png");
-    textureLight = SDL_CreateTextureFromSurface(renderer, image);
+    image = IMG_Load("images/whiteKing.png"); textureWhite.push_back(SDL_CreateTextureFromSurface(renderer, image));
+    image = IMG_Load("images/whiteQueen.png"); textureWhite.push_back(SDL_CreateTextureFromSurface(renderer, image));
+    image = IMG_Load("images/whiteRook.png"); textureWhite.push_back(SDL_CreateTextureFromSurface(renderer, image));
+    image = IMG_Load("images/whiteBishop.png"); textureWhite.push_back(SDL_CreateTextureFromSurface(renderer, image));
+    image = IMG_Load("images/whiteKnight.png"); textureWhite.push_back(SDL_CreateTextureFromSurface(renderer, image));
+    image = IMG_Load("images/whitePawn.png"); textureWhite.push_back(SDL_CreateTextureFromSurface(renderer, image));
+    image = IMG_Load("images/blackKing.png"); textureBlack.push_back(SDL_CreateTextureFromSurface(renderer, image));
+    image = IMG_Load("images/blackQueen.png"); textureBlack.push_back(SDL_CreateTextureFromSurface(renderer, image));
+    image = IMG_Load("images/blackRook.png"); textureBlack.push_back(SDL_CreateTextureFromSurface(renderer, image));
+    image = IMG_Load("images/blackBishop.png"); textureBlack.push_back(SDL_CreateTextureFromSurface(renderer, image));
+    image = IMG_Load("images/blackKnight.png"); textureBlack.push_back(SDL_CreateTextureFromSurface(renderer, image));
+    image = IMG_Load("images/blackPawn.png"); textureBlack.push_back(SDL_CreateTextureFromSurface(renderer, image));
+    image = IMG_Load("images/PureBlack.png"); textureLight = SDL_CreateTextureFromSurface(renderer, image);
     SDL_SetTextureAlphaMod(textureLight, 35);
     SDL_FreeSurface(image);
 
     //load SFX
     Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 4096);
-    Mix_Chunk* soundPlace = Mix_LoadWAV("C:/Visual Studio Code/Chess/sounds/Place.wav");
-    Mix_Chunk* soundCapture = Mix_LoadWAV("C:/Visual Studio Code/Chess/sounds/Capture.wav");
-    Mix_Chunk* soundCastle = Mix_LoadWAV("C:/Visual Studio Code/Chess/sounds/Castle.wav");
-    Mix_Chunk* soundInvalid = Mix_LoadWAV("C:/Visual Studio Code/Chess/sounds/Invalid.wav");
-    Mix_Chunk* soundCheck = Mix_LoadWAV("C:/Visual Studio Code/Chess/sounds/Check.wav");
-    Mix_Chunk* soundOver = Mix_LoadWAV("C:/Visual Studio Code/Chess/sounds/GameOver.wav");
-    Mix_Chunk* soundBloop = Mix_LoadWAV("C:/Visual Studio Code/Chess/sounds/Bloop.wav");
+    Mix_Chunk* soundPlace = Mix_LoadWAV("sounds/Place.wav");
+    Mix_Chunk* soundCapture = Mix_LoadWAV("sounds/Capture.wav");
+    Mix_Chunk* soundCastle = Mix_LoadWAV("sounds/Castle.wav");
+    Mix_Chunk* soundInvalid = Mix_LoadWAV("sounds/Invalid.wav");
+    Mix_Chunk* soundCheck = Mix_LoadWAV("sounds/Check.wav");
+    Mix_Chunk* soundOver = Mix_LoadWAV("sounds/GameOver.wav");
+    Mix_Chunk* soundBloop = Mix_LoadWAV("sounds/Bloop.wav");
+
 
     //initial
     presentState(renderer);
