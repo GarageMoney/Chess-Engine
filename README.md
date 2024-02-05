@@ -1,7 +1,7 @@
 # Chess Program
 
 A chess game written in C++ using the SDL libraries for visualization and sound effects.
-A video demonstration will be available at this link: 
+A video demonstration will be available at this link: https://youtu.be/CqzOyGLC6wE
 
 ## Installation
 
